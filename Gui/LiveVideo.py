@@ -5,7 +5,9 @@ import datetime
 from PIL import Image, ImageTk
 
 # Initialization
-path = r'C:\Users\Alec\Desktop\HackFSU\Images'
+temp = r'Images'
+path = os.path.join(os.getcwd(), temp)
+print (path)
 width, height = 800, 600
 
 # Initializes the video capture
