@@ -12,23 +12,29 @@ if not os.path.exists(path):
     os.makedirs(path)
 	
 # Initializes the video capture
-width, height = 800, 600
+outputWidth, outputHeight = 1920, 1080
+displayFactor = 2
+displayWidth = outputWidth//displayFactor
+displayHeight = outputHeight//displayFactor
 cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, displayWidth)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, displayHeight)
 
 # Initializes the GUI
 root = tk.Tk()
 vidFeed = tk.Label(root)
 vidFeed.pack()
 
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, outputWidth)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, outputHeight)
 # Binds escape to exit the program
 root.bind('<Escape>', lambda e: root.destroy())
 
 # Captures a frame and displays it
 def showFrame():
     _, frame = cap.read()
-    cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+    displayFrame = cv2.resize(frame, (displayWidth, displayHeight),interpolation=cv2.INTER_CUBIC)
+    cv2image = cv2.cvtColor(displayFrame, cv2.COLOR_BGR2RGBA)
     img = Image.fromarray(cv2image)
     imgtk = ImageTk.PhotoImage(image=img)
     vidFeed.imgtk = imgtk
