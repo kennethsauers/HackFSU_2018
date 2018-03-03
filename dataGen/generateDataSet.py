@@ -18,14 +18,20 @@ def rotateBaseImg(imgFile, setSize):
     totalImgs.append(curImage)
     quarterNote = cv2.bitwise_not(quarterNote)
     totalImgs.append(quarterNote)
+    drawImgs(totalImgs, setSize)
+
+
+def drawImgs(imgList, setSize):
     for i in range(setSize):
-    	cv2.imshow('rotation' + str(i), totalImgs[i])
+        cv2.imshow('rotation' + str(i), imgList[i])
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
+
 def main():
-	#filename = input('Enter file for base image: ')
-	rotateBaseImg('quarterNoLine.png', 7)
+	# filename = input('Enter file for base image: ')
+	# size = input('Enter size of data set to generate ')
+	rotateBaseImg('quarterNoLine.png', 100)
 if __name__ == '__main__':
 	main()
