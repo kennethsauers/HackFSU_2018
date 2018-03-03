@@ -48,7 +48,7 @@ def showFrame():
 # Takes the screenshot and saves it
 def screenshot():
     ts = datetime.datetime.now()
-    filename = "{}.jpg".format(ts.strftime("%Y-%m-%d_%H-%M-%S"))
+    filename = "{}.png".format(ts.strftime("%Y-%m-%d_%H-%M-%S"))
     p = os.path.join(path,filename)
     _, frame = cap.read()
     cv2.imwrite(p, frame)
