@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import glob
+import os
 
 def goodByeLines(path):
     ## Read
@@ -23,7 +24,8 @@ def goodByeLines(path):
     return dst
 
 def findTimeSig(img):
-    qPath = 'C:/Users/Keegan/Desktop/fsuhacks/img/query/tsig.png'
+    tsigLoc = r'img/query/tsig.png'
+    qPath = os.path.join(os.getcwd(), tsigLoc)
     query = cv2.imread(qPath, 0)
     res = cv2.matchTemplate(img, query, cv2.TM_SQDIFF)
 
@@ -31,11 +33,13 @@ def findTimeSig(img):
 
 
 if __name__ == "__main__":
-    path = 'C:/Users/Keegan/Desktop/fsuhacks/img/sheet/twinkle.png'
-    img = goodByeLines(path)
-
-    tPath = 'C:/Users/Keegan/Desktop/fsuhacks/img/query/treble.png'
-    treble = cv2.imread(tPath, 0)
+    musicLoc = r'img/sheet/twinkle.png'
+    musicPath = os.path.join(os.getcwd(), musicLoc)
+    img = goodByeLines(musicPath)
+	
+    trebleLoc = r'img/query/treble.png'
+    treblePath = os.path.join(os.getcwd(), trebleLoc)
+    treble = cv2.imread(treblePath, 0)
     wT, hT = treble.shape[::-1]
 
     result = cv2.matchTemplate(img,treble,cv2.TM_CCOEFF_NORMED)
@@ -48,8 +52,8 @@ if __name__ == "__main__":
     cv2.imshow('test', img)
     cv2.waitKey(0)
 
-
-    qtrPath = 'C:/Users/Keegan/Desktop/fsuhacks/img/query/qrt.png'
+    qtrLoc = r'img/query/qrt.png'
+    qtrPath = os.path.join(os.getcwd(), qtrLoc)
 
     query = cv2.imread(qtrPath, 0)
     w, h = query.shape[::-1]
