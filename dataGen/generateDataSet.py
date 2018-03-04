@@ -44,10 +44,11 @@ def generateQuarterLabels(count):
     np.save(filePath, lilBoi, allow_pickle=True, fix_imports=True) 
 
 # Creates the set of slightly rotated and translated images
-def createSet(imgFile, setSize):
+def createSet(imgFile, setSize, quarter):
     # Sets realistic boundaries for how different the picture will be
     degreeOffset = 10
     translationOffset = 5
+
     totalImgs = []
     quarterNote = cv2.imread(imgFile, 0)
     quarterNote = cv2.bitwise_not(quarterNote)
@@ -67,7 +68,7 @@ def createSet(imgFile, setSize):
     totalImgs.append(curImage)
     #quarterNote = cv2.bitwise_not(quarterNote)
     totalImgs.append(quarterNote)
-    if imgFile == 'quarterNoLine.png':
+    if quarter == 'y':
     	generateQuarterLabels(setSize)
     else:
     	generateEmptyLabels(setSize)
@@ -97,7 +98,8 @@ def saveImgs(dataSet, imgFile):
 def main():
     filename = input('Enter file for base image: ')
     size = input('Enter size of data set to generate ')
-    createSet(filename,int(size))
+    quarter = input('Does this have a quarter note? (y/n) ')
+    createSet(filename, int(size), quarter)
 
 if __name__ == '__main__':
 	main()
