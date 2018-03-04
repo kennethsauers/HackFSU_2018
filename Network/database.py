@@ -1,9 +1,14 @@
-# Import MNIST data
-from tensorflow.examples.tutorials.mnist import input_data
-mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
+import numpy as np
+import tensorflow as tf
 
+# pulls data from data folder for training and testing
+big_data = np.load('Data/big_data.npy')
+big_data_label = np.load('Data/big_data_label.npy')
+big_test = np.load('Data/big_test.npy')
+big_test_label = np.load('Data/big_test_label.npy')
 
-train_x = mnist.train.images.reshape([-1,28,28,1])
-train_y = mnist.train.labels
-test_x = mnist.test.images.reshape([-1,28,28,1])
-test_y = mnist.test.labels
+# data using by other files ie. model.py and main.py
+train_x =big_data
+train_y = big_data_label
+test_x = big_test
+test_y = big_test_label

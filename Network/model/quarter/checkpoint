@@ -1,0 +1,2 @@
+model_checkpoint_path: "quarter-1000"
+all_model_checkpoint_paths: "quarter-1000"
