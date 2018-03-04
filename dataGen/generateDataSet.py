@@ -14,7 +14,7 @@ def generateEmptyLabels(count):
     if not os.path.exists(path):
 	    os.makedirs(path)
 	
-	# Fills the top row with 1, and the bottom row with 0	
+	# create 2D array that labels data as invalid	
     lilBoi = [[1 for x in range(int (count))]for y in range(2)]
     for i in range(int(count)):
         lilBoi[1][i] = 0
@@ -27,13 +27,17 @@ def generateEmptyLabels(count):
 # Generates the numpy of labels for quarter notes	
 def generateQuarterLabels(count):
     print('Generating Quarter Labels...')
+
+    # create folder to store label data
     folderName = 'DataSet'
     path = os.path.join(os.getcwd(), folderName)
+
+    # use current datetime to generate unique file name
     ts = datetime.datetime.now()
     if not os.path.exists(path):
 	    os.makedirs(path)
 
-	# Fills the top row with 0, and the bottom row with 1	
+	# create a 2D array that labels the data as valid
     lilBoi = [[0 for x in range(int(count))]for y in range(2)]
     for i in range(int(count)):
         lilBoi[1][i] = 1
@@ -44,38 +48,58 @@ def generateQuarterLabels(count):
     np.save(filePath, lilBoi, allow_pickle=True, fix_imports=True) 
 
 # Creates the set of slightly rotated and translated images
-def createSet(imgFile, setSize, quarter):
+def createSet(imgFile, setSize, quarter, debug):
+
     # Sets realistic boundaries for how different the picture will be
     degreeOffset = 10
     translationOffset = 5
-
+    invert = 'n'
+    # create list to store all images
     totalImgs = []
-    quarterNote = cv2.imread(imgFile, 0)
-    quarterNote = cv2.bitwise_not(quarterNote)
-    rows,cols = quarterNote.shape
+
+    if debug == 'y':
+        invert = input('Invert color? (y/n) ')
+
+    # read in the file given by the filname and invert the color
+    # count rows and columns in the image
+    baseImage = cv2.imread(imgFile, 0)
+    baseImage = cv2.bitwise_not(baseImage)
+    rows,cols = baseImage.shape
+
+    # generate random rotations and translations of the original image
+    # bounded by the offsets and then append to a list
     for i in range(setSize-2):
         M = cv2.getRotationMatrix2D((cols/2,rows/2),random.randint(-degreeOffset,degreeOffset),1)
-        curImage = cv2.warpAffine(quarterNote,M,(cols,rows))
+        curImage = cv2.warpAffine(baseImage,M,(cols,rows))
         M = np.float32([[1,0,random.randint(-translationOffset,translationOffset)],[0,1,random.randint(-translationOffset,translationOffset)]])
         curImage = cv2.warpAffine(curImage,M,(cols,rows))
-        #curImage = cv2.bitwise_not(curImage)
+        ## undo color inversion
+        curImage = cv2.bitwise_not(curImage) if invert != 'y' else curImage
         totalImgs.append(curImage)
+
+    # generate specific case of 180 rotation
     M = cv2.getRotationMatrix2D((cols/2,rows/2),180,1)
-    curImage = cv2.warpAffine(quarterNote,M,(cols,rows))
+    curImage = cv2.warpAffine(baseImage,M,(cols,rows))
     M = np.float32([[1,0,random.randint(-translationOffset,translationOffset)],[0,1,random.randint(-translationOffset,translationOffset)]])
     curImage = cv2.warpAffine(curImage,M,(cols,rows))
-    #curImage = cv2.bitwise_not(curImage)
+    # undo color inversion and append the original and special case
+    curImage = cv2.bitwise_not(curImage) if invert != 'y' else curImage
     totalImgs.append(curImage)
-    #quarterNote = cv2.bitwise_not(quarterNote)
-    totalImgs.append(quarterNote)
-    if quarter == 'y':
-    	generateQuarterLabels(setSize)
+    baseImage = cv2.bitwise_not(baseImage) if invert != 'y' else baseImage
+    totalImgs.append(baseImage)
+
+    if debug == 'y':
+        drawImgs(totalImgs, setSize)
     else:
-    	generateEmptyLabels(setSize)
-    saveImgs(totalImgs, imgFile)
-    #drawImgs(totalImgs, setSize)
+    # check whether label array is formatted for a valid input or invalid input
+        if quarter == 'y':
+    	    generateQuarterLabels(setSize)
+        else:
+    	    generateEmptyLabels(setSize)
+        saveImgs(totalImgs, imgFile)
 
 # Draws the resultant images on the screen	
+# Mostly used for debugging
 def drawImgs(imgList, setSize):
     for i in range(setSize):
         cv2.imshow('rotation' + str(i), imgList[i])
@@ -83,13 +107,18 @@ def drawImgs(imgList, setSize):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-# Saves the resultant images	
+# store 2d pixel arrays to the filename stored at the filename imgFile	
 def saveImgs(dataSet, imgFile):
     folderName = 'DataSet'
+
+    # find the current working directly to create a folder there to store the images
     path = os.path.join(os.getcwd(), folderName)
     size = len(dataSet)
     if not os.path.exists(path):
         os.makedirs(path)
+
+    # store the 2D array representation of the images in an array and allow for 
+    # customized outputfile naming
     bigBoi = np.asarray(dataSet)
     fileName = input('Enter desired output file name ')
     filePath = os.path.join(path, fileName)
@@ -99,7 +128,8 @@ def main():
     filename = input('Enter file for base image: ')
     size = input('Enter size of data set to generate ')
     quarter = input('Does this have a quarter note? (y/n) ')
-    createSet(filename, int(size), quarter)
+    debug = input('Debug mode? (y/n) ')
+    createSet(filename, int(size), quarter, debug)
 
 if __name__ == '__main__':
 	main()
