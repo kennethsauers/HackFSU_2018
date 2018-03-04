@@ -3,7 +3,7 @@ import numpy as np
 import glob
 import os
 import math
-import soundToMidi
+import soundToMidi as matt
 
 def goodByeLines(path):
     ## Read
@@ -35,7 +35,7 @@ def findTimeSig(img):
 
 
 if __name__ == "__main__":
-    noteNames = ['f4' 'e4', 'e4', 'c4', 'b3', 'a3', 'g3', 'f3', 'e3', 'd3', 'c2']
+    noteNames = ['f4' 'e4', 'e4', 'c4', 'b3', 'a3', 'g3', 'f3', 'e3', 'd3', 'c3']
     musicLoc = r'img/sheet/twinkle.png'
     musicPath = os.path.join(os.getcwd(), musicLoc)
     #img = goodByeLines(musicPath)
@@ -108,7 +108,7 @@ if __name__ == "__main__":
                       
     #print (len(dividers))
     cv2.imshow('test', img)
-    #cv2.waitKey(0)
+    cv2.waitKey(0)
     diff = dividers[4] - dividers[0]
     diff /= 8
     start = dividers[0]
@@ -193,7 +193,7 @@ if __name__ == "__main__":
     for value in xVals:
         print(noteNames[buckettoX[value]])
         allNotes.append(noteNames[buckettoX[value]])
-    generateMidi(allNotes)  
+    matt.generateMidi(allNotes)  
    # print (type(notes))
     cv2.imshow('test', img)
     cv2.waitKey(0)
