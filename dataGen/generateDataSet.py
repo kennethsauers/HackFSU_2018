@@ -2,6 +2,7 @@ import cv2
 import random
 import os
 import numpy as np
+import datetime
 
 def createSet(imgFile, setSize):
     degreeOffset = 10
@@ -26,6 +27,7 @@ def createSet(imgFile, setSize):
     quarterNote = cv2.bitwise_not(quarterNote)
     totalImgs.append(quarterNote)
     saveImgs(totalImgs)
+   # drawImgs(totalImgs, setSize)
 
 def drawImgs(imgList, setSize):
     for i in range(setSize):
@@ -37,12 +39,13 @@ def drawImgs(imgList, setSize):
 def saveImgs(dataSet):
     folderName = 'DataSet'
     path = os.path.join(os.getcwd(), folderName)
+    ts = datetime.datetime.now()
     if not os.path.exists(path):
-        os.makedirs(path)    
-    for i, frame in enumerate(dataSet):
-        fileName = ("image%s" % i)
-        filePath = os.path.join(path, fileName)
-       	np.save(filePath, frame, allow_pickle=True, fix_imports=True)    
+        os.makedirs(path)
+    bigBoi = np.asarray(dataSet)
+    fileName = "BigBoi{}".format(ts.strftime("%d_%H-%M-%S"))
+    filePath = os.path.join(path, fileName)
+    np.save(filePath, bigBoi, allow_pickle=True, fix_imports=True)      
         
 def main():
 	# filename = input('Enter file for base image: ')
