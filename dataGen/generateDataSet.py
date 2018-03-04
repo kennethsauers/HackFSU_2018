@@ -20,7 +20,7 @@ def generateEmptyLabels(count):
         lilBoi[1][i] = 0
     lilBoi = np.asarray(lilBoi)
 	
-    fileName = ("EmptyLabels%s" % count)
+    fileName = input('Enter desired label file name ')
     filePath = os.path.join(path, fileName)
     np.save(filePath, lilBoi, allow_pickle=True, fix_imports=True) 
 
@@ -39,16 +39,15 @@ def generateQuarterLabels(count):
         lilBoi[1][i] = 1
     lilBoi = np.asarray(lilBoi)
 
-    fileName = ("QuarterLabels%s" % count)
+    fileName = input('Enter desired label file name ')
     filePath = os.path.join(path, fileName)
     np.save(filePath, lilBoi, allow_pickle=True, fix_imports=True) 
 
 # Creates the set of slightly rotated and translated images
 def createSet(imgFile, setSize):
     # Sets realistic boundaries for how different the picture will be
-	degreeOffset = 10
-    translationOffset = 5;
-	
+    degreeOffset = 10
+    translationOffset = 5
     totalImgs = []
     quarterNote = cv2.imread(imgFile, 0)
     quarterNote = cv2.bitwise_not(quarterNote)
@@ -72,8 +71,8 @@ def createSet(imgFile, setSize):
     	generateQuarterLabels(setSize)
     else:
     	generateEmptyLabels(setSize)
-    #saveImgs(totalImgs, imgFile)
-    drawImgs(totalImgs, setSize)
+    saveImgs(totalImgs, imgFile)
+    #drawImgs(totalImgs, setSize)
 
 # Draws the resultant images on the screen	
 def drawImgs(imgList, setSize):
@@ -91,17 +90,14 @@ def saveImgs(dataSet, imgFile):
     if not os.path.exists(path):
         os.makedirs(path)
     bigBoi = np.asarray(dataSet)
-    if imgFile == 'quarterNoLine.png':
-	    fileName = ("QuarterNotes%s" % size)
-    else:
-	    fileName = ("EmptyNotes%s" % size)
+    fileName = input('Enter desired output file name ')
     filePath = os.path.join(path, fileName)
     np.save(filePath, bigBoi, allow_pickle=True, fix_imports=True)      
         
 def main():
-	filename = input('Enter file for base image: ')
-	size = input('Enter size of data set to generate ')
-	createSet(filename,int(size))
+    filename = input('Enter file for base image: ')
+    size = input('Enter size of data set to generate ')
+    createSet(filename,int(size))
 
 if __name__ == '__main__':
 	main()
