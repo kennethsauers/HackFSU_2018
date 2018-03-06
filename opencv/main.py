@@ -5,6 +5,9 @@ import os
 import math
 import soundToMidi as matt
 
+def removeDups(l):
+    return list(set(l))
+
 def goodByeLines(path):
     ## Read
     img = cv2.imread(path)
@@ -73,33 +76,49 @@ if __name__ == "__main__":
     bestH = 0
     i=0
     # Find lines 
-    img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    #img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     img = cv2.Canny(img,50,150,apertureSize = 3)
-    lines = cv2.HoughLines(img,1,np.pi/180,20)
+    lines = cv2.HoughLinesP(img,1,np.pi/180, 1000, 1200, 0)
     desiredAngle = 1.57079632679
     print (np.shape(lines))
-    for rho,theta in lines[0]:
-        i+=1
-        print("Line%d: %d     %f" %(i,rho, theta))
+    for line in lines:
+        for x1,y1,x2,y2 in line:
+            i+=1
+            
         # If the line's angle's percent difference to a horizontal line is greater than 5%
         # We consider it not straight and throw it away
-        #if abs((theta - desiredAngle)/desiredAngle - 1) > 0.05:
-         #   continue
-        a = np.cos(theta)
-        b = np.sin(theta)
-        x0 = a*rho
-        y0 = b*rho
-        x1 = int(x0 + 1000*(-b))
-        y1 = int(y0 + 1000*(a))
-        x2 = int(x0 - 1000*(-b))
-        y2 = int(y0 - 1000*(a))
-        cv2.line(img, (x1, y1), (x2 , y2), (0, 255, 0), 2)
-        dividers.append((y2+y1)//2 )
-        
+            #if abs((theta - desiredAngle)/desiredAngle ) > 0.001:
+             #   continue
+            #a = np.cos(theta)
+            #b = np.sin(theta)
+            #x0 = a*rho
+            #y0 = b*rho
+            #x1 = int(x0 + 1000*(-b))
+            #y1 = int(y0 + 1000*(a))
+            #x2 = int(x0 - 1000*(-b))
+            #y2 = int(y0 - 1000*(a))
+            if abs(y1 - y2) > 1:
+                continue
+            
+            cv2.line(img, (x1, y1), (x2 , y2), (0, 255, 0), 2)
+            dividers.append((y2+y1)//2 )
+            print("Line%d: %d %d %d %d" %(i, x1, y1, x2, y2))
+            #print("Line%d: %d     %f" %(i,rho, theta))
                       
     #print (len(dividers))
+    dividers = removeDups(dividers)
+    dividers.sort()
     cv2.imshow('test', img)
+    for d1 in dividers:
+        for d2 in dividers:
+            if d1 == d2:
+                break
+            if abs(d1-d2) < 3:
+                dividers.remove(d2)
+            
+    print (dividers)
     cv2.waitKey(0)
+    
     diff = dividers[4] - dividers[0]
     diff /= 8
     start = dividers[0]
