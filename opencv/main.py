@@ -73,38 +73,29 @@ if __name__ == "__main__":
     bestH = 0
     i=0
     # Find lines 
-    while h > 5:
-        #print ("W: %d, H: %d" %(w, h))
-        lineRes = cv2.matchTemplate(img, frame, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.60
-        lineLocs = np.where(lineRes >= threshold)
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(lineRes)
-        currentMax = max_val
-        #print (currentMax)
-        if currentMax > bestMax:
-            bestH = h
-            bestW = w
-            bestMax = currentMax 
-        frame = cv2.resize(frame, None, fx = 1, fy = 0.9, interpolation = cv2.INTER_AREA)
-        w, h = frame.shape[::-1]
-        bestMax = currentMax
-    #print (np.shape(lineLocs))    
-    for pt in zip(*lineLocs[::-1]):
-        #print ("X:%d Y:%d" %(pt[0], pt[1]))
-        for pt2 in zip(*lineLocs[::-1]):
-            p1x = int(pt[0])
-            p2x = int(pt2[0])
-            p1y = int(pt[1])
-            p2y = int(pt2[1]) 
-            if p1x == p2x and p1y == p2y :
-                break
-            if (abs(p1y-p2y) < 5):
-                flag = 1
-        if flag == 0:
-            #print ("X:%d Y:%d" %(pt[0], pt[1]))
-            cv2.line(img, (pt[0], pt[1] + 3), (pt[0] + bestW, pt[1] + 3), (0, 255, 0), 2)
-            dividers.append(pt[1] + 3)
-        flag = 0
+    img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+    img = cv2.Canny(img,50,150,apertureSize = 3)
+    lines = cv2.HoughLines(img,1,np.pi/180,20)
+    desiredAngle = 1.57079632679
+    print (np.shape(lines))
+    for rho,theta in lines[0]:
+        i+=1
+        print("Line%d: %d     %f" %(i,rho, theta))
+        # If the line's angle's percent difference to a horizontal line is greater than 5%
+        # We consider it not straight and throw it away
+        #if abs((theta - desiredAngle)/desiredAngle - 1) > 0.05:
+         #   continue
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a*rho
+        y0 = b*rho
+        x1 = int(x0 + 1000*(-b))
+        y1 = int(y0 + 1000*(a))
+        x2 = int(x0 - 1000*(-b))
+        y2 = int(y0 - 1000*(a))
+        cv2.line(img, (x1, y1), (x2 , y2), (0, 255, 0), 2)
+        dividers.append((y2+y1)//2 )
+        
                       
     #print (len(dividers))
     cv2.imshow('test', img)
