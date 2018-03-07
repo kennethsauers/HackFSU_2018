@@ -6,8 +6,14 @@ import datetime
 import numpy as np
 # Parameters
 
+log_histograms = False
+
 batch_size = 20
 display_step = 1
+
+filters_conv_1 = 16
+kernal_size_conv1 = 3
+strides_conv1 = 2
 
 n_hidden_1 = 128
 n_hidden_2 = 128
@@ -29,32 +35,34 @@ class brain():
         if not os.path.exists(self.model_name):
             os.makedirs(self.model_name)
 
-        self.loss_op, self.train_op, self.logits = self.create_optimizer()
-
-    def save(self, sess, filepath = '/model'):
-        self.saver.save(sess, filepath)
-
-    # This function sets up the model
-    def multilayer_perceptron(self):
+        self.create_network()
+    # this function creating all variables and methods need to train the model
+    def create_network(self):
         self.X = tf.placeholder("float", self.input_size)
         self.Y = tf.placeholder("float",  [None, self.output_size])
-        conv_1 = conv_2d(inputs=self.X, filters = 16, kernel_size = 3, strides=2, padding = 'SAME')
+        conv_1 = conv_2d(inputs=self.X, filters = filters_conv_1,
+            kernel_size = kernal_size_conv1, strides=strides_conv1,
+            padding = 'SAME')
         flat = flatten(conv_1)
         layer_1 = dense(inputs = flat, units = n_hidden_1)
         layer_2 = dense(inputs = layer_1, units = n_hidden_2)
-        out_layer = dense(inputs = layer_2, units = self.output_size)
-        return out_layer
-
-    # this function creating all variables and methods need to train the model
-    def create_optimizer(self):
-        logits = self.multilayer_perceptron()
-        loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.Y))
-        tf.summary.scalar("loss", loss_op)
+        self.logits = dense(inputs = layer_2, units = self.output_size)
+        self.loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=self.logits, labels=self.Y))
         optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
-        train_op = optimizer.minimize(loss_op)
-        #tf.summary.scalar('train_op', train_op)
-        return loss_op, train_op, logits
-
+        self.train_op = optimizer.minimize(self.loss_op)
+        self.pred = tf.nn.softmax(self.logits)
+        correct_prediction = tf.equal(tf.argmax(self.pred, 1), tf.argmax(self.Y, 1))
+        self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+        tf.summary.scalar('Accuracy', self.accuracy)
+        tf.summary.scalar("loss", self.loss_op)
+        if log_histograms:
+            tf.summary.histogram('X',self.X)
+            tf.summary.histogram('Y',self.Y)
+            tf.summary.histogram('conv_1',conv_1)
+            tf.summary.histogram('layer_1',layer_1)
+            tf.summary.histogram('layer_2',layer_2)
+            tf.summary.histogram('logits', self.logits)
+        return
     # trains model on data from database.py for Parameter epoch times
     def train_for(self, training_epochs = 20, save_after_training = True, with_restore = False):
         with tf.Session() as sess:
@@ -67,35 +75,29 @@ class brain():
             for epoch in range(training_epochs):
                 avg_cost = 0.
                 total_batch = database.train_x.shape[0]
-                _, c, mer = sess.run([self.train_op, self.loss_op, self.merged], feed_dict={self.X: database.train_x, self.Y: database.train_y})
+                _, c, mer, acc = sess.run([self.train_op, self.loss_op, self.merged, self.accuracy], feed_dict={self.X: database.train_x, self.Y: database.train_y})
                 writer.add_summary(mer, epoch)
                 cost = c
-
                 if epoch % display_step == 0:
-                    print("Epoch:", '%04d' % (epoch+1), "cost={:.9f}".format(cost))
+                    print("Epoch:", '%04d' % (epoch+1), "cost={:.5f}".format(cost),"Accuracy_training={:.5f}".format(acc))
+                    print("Accuracy_testing:", self.accuracy.eval({self.X: database.test_x, self.Y: database.test_y}))
             print("Optimization Finished!")
-
-            pred = tf.nn.softmax(self.logits)
-            correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(self.Y, 1))
-            accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-            tf.summary.scalar('Accuracy', accuracy)
-            print("Accuracy:", accuracy.eval({self.X: database.test_x, self.Y: database.test_y}))
             if save_after_training:
                 self.saver.save(sess, self.model_name, global_step=1000)
             writer.close()
             return True
-
     #productes the model's confidence on the output of a givin action
     def predict(self, input, restore = True):
         feed_dict = {self.X: input.reshape(self.input_size_1)}
         with tf.Session() as sess:
             self.saver = tf.train.Saver()
             self.saver.restore(sess, tf.train.latest_checkpoint(self.model_path))
-            prob = sess.run(self.logits, feed_dict = feed_dict)
-            prob = sess.run(tf.nn.softmax(prob))
+            prob = sess.run(self.pred, feed_dict = feed_dict)
         return prob
-
     # finds the output with this highest predicted probability
     def evaluate(self, input, restore = True):
         prob = self.predict(input)
         return np.argmax(prob)
+
+    def save(self, sess, filepath = '/model'):
+        self.saver.save(sess, filepath)
