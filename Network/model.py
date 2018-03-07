@@ -2,11 +2,11 @@ from __future__ import print_function
 import tensorflow as tf
 import database
 import os
+import datetime
 import numpy as np
 # Parameters
-learning_rate = 0.001
-training_epochs = 33
-batch_size = 100
+
+batch_size = 20
 display_step = 1
 
 n_hidden_1 = 128
@@ -17,11 +17,13 @@ flatten = tf.contrib.layers.flatten
 
 
 class brain():
-
-    def __init__(self, name, input_size = [None,30,30,1],input_size_1= [-1,30,30,1], output_size = 2):
+    def __init__(self, name, input_size = [None,30,30,1],input_size_1= [-1,30,30,1], output_size = 2
+                ,learning_rate = .001):
         self.input_size = input_size
         self.output_size = output_size
         self.input_size_1 = input_size_1
+        self.name = name
+        self.learning_rate = learning_rate
         self.model_path = "model/" + name
         self.model_name = self.model_path + '/' + name
         if not os.path.exists(self.model_name):
@@ -44,17 +46,20 @@ class brain():
         return out_layer
 
     # this function creating all variables and methods need to train the model
-        def create_optimizer(self):
+    def create_optimizer(self):
         logits = self.multilayer_perceptron()
         loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=self.Y))
-        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        tf.summary.scalar("loss", loss_op)
+        optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate)
         train_op = optimizer.minimize(loss_op)
+        #tf.summary.scalar('train_op', train_op)
         return loss_op, train_op, logits
 
     # trains model on data from database.py for Parameter epoch times
-    def training(self, save_after_training = True, with_restore = False):
+    def train_for(self, training_epochs = 20, save_after_training = True, with_restore = False):
         with tf.Session() as sess:
-            writer = tf.summary.FileWriter("output", sess.graph)
+            writer = tf.summary.FileWriter("Tensorboard/" + self.name, sess.graph)
+            self.merged = tf.summary.merge_all()
             self.saver = tf.train.Saver()
             sess.run(tf.global_variables_initializer())
             if with_restore:
@@ -62,8 +67,10 @@ class brain():
             for epoch in range(training_epochs):
                 avg_cost = 0.
                 total_batch = database.train_x.shape[0]
-                _, c = sess.run([self.train_op, self.loss_op], feed_dict={self.X: database.train_x, self.Y: database.train_y})
+                _, c, mer = sess.run([self.train_op, self.loss_op, self.merged], feed_dict={self.X: database.train_x, self.Y: database.train_y})
+                writer.add_summary(mer, epoch)
                 cost = c
+
                 if epoch % display_step == 0:
                     print("Epoch:", '%04d' % (epoch+1), "cost={:.9f}".format(cost))
             print("Optimization Finished!")
@@ -71,6 +78,7 @@ class brain():
             pred = tf.nn.softmax(self.logits)
             correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(self.Y, 1))
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+            tf.summary.scalar('Accuracy', accuracy)
             print("Accuracy:", accuracy.eval({self.X: database.test_x, self.Y: database.test_y}))
             if save_after_training:
                 self.saver.save(sess, self.model_name, global_step=1000)
